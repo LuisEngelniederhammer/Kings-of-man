@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.0" orientation="orthogonal" renderorder="right-down" width="30" height="15" tilewidth="32" tileheight="32" nextobjectid="32">
+ <tileset firstgid="1" name="towncenter1" tilewidth="64" tileheight="64" tilecount="1" columns="1">
+  <image source="../buildings/towncenter1.png" width="64" height="64"/>
+ </tileset>
+ <tileset firstgid="2" name="tileset" tilewidth="32" tileheight="32" tilecount="300" columns="20">
+  <image source="tileset.png" width="640" height="480"/>
+ </tileset>
+ <layer name="terrain" width="30" height="15">
+  <properties>
+   <property name="test" value="testCustomAttribute"/>
+  </properties>
+  <data encoding="base64" compression="zlib">
+   eJxjYBgFo2AUjIJRMAoQgAWImYCYGYmNjJmRaJgaZMwEpZnRxND1MqHZxTpAGABp7ADv
+  </data>
+ </layer>
+ <objectgroup name="InteractObjects">
+  <object id="23" name="ort" x="0" y="0" width="32" height="32"/>
+  <object id="25" name="TownLeft" x="32" y="256" width="192" height="160"/>
+  <object id="26" name="TownCenter" x="384" y="256" width="192" height="160"/>
+  <object id="28" name="TownRight" x="736" y="256" width="192" height="160"/>
+  <object id="30" name="WallLeft" x="0" y="320" width="32" height="96"/>
+  <object id="31" name="WallRight" x="928" y="320" width="32" height="96"/>
+ </objectgroup>
+</map>
