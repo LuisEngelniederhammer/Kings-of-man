@@ -2,6 +2,7 @@ require("shared.Base");
 require("shared.DayCycle");
 require("shared.Commoner");
 require("shared.Building");
+require("shared.Mapguard");
 
 App =
   {
@@ -18,7 +19,7 @@ App =
     }
   }
 
-function App:new(o)
+function App:new(o, mapinstance)
 
   o = o or {}
   setmetatable(o, self)
@@ -28,6 +29,7 @@ function App:new(o)
   self.GameClassObject.Commoners = Commoner:new(nil,self.BaseClassObject,1,1,1,1);
   self.DayCycleClassObject = DayCycle:new(nil,4);
   self.BuildingClassObject = Building:new(nil);
+  self.mapguard = Mapguard:new(nil,mapinstance);
   return o
 end
 

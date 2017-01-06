@@ -49,7 +49,7 @@ function love.load()
   print("Objects loaded and processed...");
 
   print("Initializing Gameplay mechanics...");
-  _App = App:new(nill);
+  _App = App:new(nil,map);
   print("Initialized Gameplay mechanics...");
 
   font = love.graphics.newFont("fonts/OpenSans-Regular.ttf", 15);
@@ -92,10 +92,10 @@ function love.load()
       offsetY = 0
     }
 
-  -- print ( map.layers["terrain"].y);
-  --love.graphics.translate(0,0);
   mouse3IsDown = false;
-  map:resize(globals.width,globals.height);
+  map.layers["terrain"].x = 0;
+  map.layers["terrain"].y = 0;
+
 end
 --
 --
@@ -177,30 +177,26 @@ function love.update(dt)
 
   hud.layout:pop();
 
-
-  --
-  --Update loop läuft
-  --
-  --
-  --
-  for k, object in pairs(map.objects) do
-    print(object.name)
-  end
-  --ps test
   if showPS == true then
     psystem:update(dt);
   end
   ps:update(dt);
   --
   _App.DayCycleClassObject:start();
+
+
+  -- moveMap(love.mouse.getX(),love.mouse.getY());
+
+
   map:update(dt);
   if _App.DayCycleClassObject:isOver() then
     print("Day over/Tag vorbei. Current Day/Cycle: " .. _App.DayCycleClassObject:getCurrentDayCount());
 
     _App.DayCycleClassObject:_end();
   end
-end
 
+
+end
 --
 --
 --
@@ -222,96 +218,73 @@ function love.draw()
   love.graphics.setColor(255, 255, 255, 255);
 
   love.graphics.push( );
-  if (mouse3IsDown == true) then
+  if ( mouse3IsDown == true ) then
+    love.graphics.translate(love.mouse.getX(),love.mouse.getY());
 
-    globals.tx = love.mouse.getX() - ((map.layers["terrain"].width * 32) / 2);
-
-    globals.ty = love.mouse.getY() - ((map.layers["terrain"].height * 32) / 2);
-
-    love.graphics.translate(love.mouse.getX() - ((map.layers["terrain"].width * 32) / 2),love.mouse.getY() - ((map.layers["terrain"].height * 32) / 2));
-
+    map.layers["terrain"].x = love.mouse.getX() - globals.offsetX;
+    map.layers["terrain"].y = love.mouse.getY() - globals.offsetY;
   else
-    love.graphics.translate(globals.tx, globals.ty);
+     map.layers["terrain"].x, map.layers["terrain"].y = _App.mapguard:getCurrentFocus();
   end
-  map:draw();
+
 
   love.graphics.pop();
+  map:draw();
   hud:draw();
 
-  --align the map to 0,0 in the window
-  --local tx = math.floor(interactiveObjects.ort.x);
-  --local ty = math.floor(interactiveObjects.ort.y);
-
-  -- only draw this one layer
-  --map:drawTileLayer("terrain");
-
-  -- particle test
-  --love.graphics.draw(psystem, love.mouse.getX(), love.mouse.getY())
-  -- Reset color
   love.graphics.setColor(255, 255, 255, 255);
   love.graphics.setBackgroundColor(0, 100, 100, 0.7);
-
-
---love.graphics.setBlendMode( "add", "alphamultiply" );
---love.graphics.draw(ps, love.graphics.getWidth() * 0.5, love.graphics.getHeight() * 0.5)
---love.graphics.setBlendMode( "alpha" );
---love.graphics.draw( _App.BuildingClassObject:getActiveModel("towncenter") ,interactiveObjects.TownCenter.x + interactiveObjects.TownCenter.width / 2 - 32, interactiveObjects.TownCenter.y + interactiveObjects.TownCenter.height / 2 + 16);
 end
-
 --
 --
 --
 --
 function love.mousereleased( x, y, button, istouch )
+  if ( _App:getGameState() == App.GameState.mainmenu or _App:getGameState() == App.GameState.pause) then
+    return;
+  end
   if ( button == 2 ) then
     showPS = false;
     psystem:reset();
 
-  elseif ( button == 3 ) then
+  elseif ( button == 1 ) then
     mouse3IsDown = false;
-    globals.offsetX = love.mouse.getX();
-    globals.offsetY = love.mouse.getY();
+    _App.mapguard:updateReleased(love.mouse.getX(),love.mouse.getY());
 
   end
 end
 --
 --
-
-
+--
+--
 function love.mousepressed( x, y, button, istouch )
 
   if ( _App:getGameState() == App.GameState.mainmenu or _App:getGameState() == App.GameState.pause) then
     return;
   end
 
-  if  (button == 3) then
-    mouse3IsDown = true;
-  end
-  if  (button == 1) then
-    map.objects["test" .. math.random(1,10)] = {
-      id = 1,
-      name = "test" .. math.random(1,10),
-      type = "",
-      shape = "rectangle",
-      x = love.mouse.getX(),
-      y = love.mouse.getY(),
-      width = 32,
-      height = 32,
-      rotation = 0,
-      visible = true,
-      properties = {}
-    }
-  end
-
   if ( (button == 1) and (isClickOnObject(interactiveObjects.ort,x,y) == true) ) then
-  --_App.DayCycleClassObject:suspend();
-  --_App:setGameState(_App.GameState.pause);
   end
 
   if ( button == 2 ) then
-    local tmpx,tmpy = map:convertPixelToTile(love.mouse.getX(),love.mouse.getY());
+    local a,b = _App.mapguard:pixleToTile(love.mouse.getX(),love.mouse.getY());
+    print("tiles: " .. a .. "/" .. b);
 
-    print( "clicked on tile x/y: " .. math.floor(tmpx) .. "/" .. math.floor(tmpy));
+    local c,d = _App.mapguard:pixleToMapPixle(love.mouse.getX(),love.mouse.getY());
+    if ( c == false or d == false) then
+      print ("not on map");
+    else
+      print("pixles from map origin: " .. c .. "/" .. d);
+    end
+  end
+
+  if  (button == 1) then
+
+    mouse3IsDown = true;
+
+    _App.mapguard:updateClicked(love.mouse.getX(),love.mouse.getY());
+
+    globals.offsetX,globals.offsetY = _App.mapguard:pixleToMapPixle(love.mouse.getX(),love.mouse.getY());
   end
 end
 --
@@ -345,7 +318,6 @@ end
 --
 --
 function love.textinput(t)
-  -- forward text input to SUIT
   mainMenu:textinput(t);
   pauseMenu:textinput(t);
 end
@@ -357,628 +329,24 @@ function love.keypressed(key)
   if key == "escape" and (_App:getGameState() ~= App.GameState.mainmenu) then
     _App.DayCycleClassObject:suspend();
     _App:setGameState(_App.GameState.pause);
-  elseif key == "left" then
-    globals.tx = globals.tx - 32;
   elseif key == "right" then
+    globals.tx = globals.tx - 32;
+
+  elseif key == "left" then
     globals.tx = globals.tx + 32;
+
   elseif key == "up" then
     globals.ty = globals.ty + 32;
+
   elseif key == "down" then
     globals.ty = globals.ty - 32;
+
   end
-
-  --foreward keyboard input to GUI system
-  --mainMenu:keypressed(key);
-  --pauseMenu:keypressed(key);
-
 end
 
 
 
 
+--
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+--
